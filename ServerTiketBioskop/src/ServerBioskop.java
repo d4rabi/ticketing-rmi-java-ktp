@@ -5,25 +5,25 @@
  */
 
 /**
- *
+ *Z
  * @author Annisa
  */
 
 import java.rmi.registry.Registry; 
 import java.rmi.registry.LocateRegistry; 
 import java.rmi.RemoteException; 
-import java.rmi.server.UnicastRemoteObject; 
+import java.rmi.server.UnicastRemoteObject;
 
 public class ServerBioskop extends BioskopService {
     public ServerBioskop(){}
     
     public static void main(String[] args) {
-        try { 
+        try {
           Registry registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
           BioskopService obj = new BioskopService();
           
           IBioskop stub = (IBioskop) UnicastRemoteObject.exportObject(obj, 0);
-          registry.bind("Bioskop", stub);
+          registry.rebind("Bioskop", stub);
           
         System.err.println("Server ready"); 
         } catch (Exception e) { 

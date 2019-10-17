@@ -2,6 +2,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
 import javax.swing.table.DefaultTableModel;
+import java.lang.reflect.Field;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -24,12 +25,49 @@ public class ClientPage extends javax.swing.JFrame {
         reload();
     }
     
+    private static void forceRegistryHostNameOnStub(Object registry, Object stub) {
+        try {
+            String regHost = getReferenceToInnerObject(registry, "ref", "ref", "ep", "host").toString();
+    
+            Object stubEp = getReferenceToInnerObject(stub, "h", "ref", "ref", "ep");
+            Field fStubHost = getInheritedPrivateField(stubEp, "host");
+            fStubHost.setAccessible(true);
+            fStubHost.set(stubEp, regHost);
+        } catch (Exception e) {
+            
+        }
+    }
+    
+    private static Object getReferenceToInnerObject(Object from, String... objectHierarchy) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        Object ref = from;
+        for (String fieldname : objectHierarchy) {
+            Field f = getInheritedPrivateField(ref, fieldname);
+            f.setAccessible(true);
+            ref = f.get(ref);
+        }
+        return ref;
+    }
+    
+    private static Field getInheritedPrivateField(Object from, String fieldname) throws NoSuchFieldException {
+        Class<?> i = from.getClass();
+        while (i != null && i != Object.class) {
+            try {
+                return i.getDeclaredField(fieldname);
+            } catch (NoSuchFieldException e) {
+                
+            }
+            i = i.getSuperclass();
+        }
+        return from.getClass().getDeclaredField(fieldname);
+    }
+    
     public void reload(){
         try {
             Object[] colPesawat = {"No","Maskapai","Asal","Tujuan","Tanggal Keberangkatan"};
             Object[][] dataPesawat;
-            Registry registry = LocateRegistry.getRegistry("192.168.137.2",Registry.REGISTRY_PORT);
+            Registry registry = LocateRegistry.getRegistry("192.168.137.187",Registry.REGISTRY_PORT);
             IPesawat stubPesawat = (IPesawat) registry.lookup("Pesawat");
+            forceRegistryHostNameOnStub(registry, stubPesawat);
             List<Pesawat> listPesawat = (List)stubPesawat.getPesawats();
             dataPesawat = new Object[listPesawat.size()][colPesawat.length];
             int i = 0;
@@ -50,8 +88,9 @@ public class ClientPage extends javax.swing.JFrame {
         try {
             Object[] colBioskop = {"No","Film","Bioskop","Studio"};
             Object[][] dataBioskop = {};
-            Registry registry = LocateRegistry.getRegistry("192.168.137.3",Registry.REGISTRY_PORT);
+            Registry registry = LocateRegistry.getRegistry("192.168.137.188",Registry.REGISTRY_PORT);
             IBioskop stubBioskop = (IBioskop) registry.lookup("Bioskop");
+            forceRegistryHostNameOnStub(registry, stubBioskop);
             List<Bioskop> listBioskop = (List)stubBioskop.getBioskops();
             dataBioskop = new Object[listBioskop.size()][colBioskop.length];
             int i = 0;
